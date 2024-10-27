@@ -31,6 +31,8 @@ mod selector;
 mod str;
 mod styles;
 mod symbol;
+#[path = "target.rs"]
+mod target_;
 mod ty;
 mod value;
 mod version;
@@ -61,6 +63,7 @@ pub use self::selector::*;
 pub use self::str::*;
 pub use self::styles::*;
 pub use self::symbol::*;
+pub use self::target_::*;
 pub use self::ty::*;
 pub use self::value::*;
 pub use self::version::*;
@@ -116,6 +119,7 @@ pub(super) fn define(global: &mut Scope, inputs: Dict) {
     global.define_func::<assert>();
     global.define_func::<eval>();
     global.define_func::<style>();
+    global.define_func::<target>();
     global.define_module(calc::module());
     global.define_module(sys::module(inputs));
 }

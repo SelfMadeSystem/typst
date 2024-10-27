@@ -1,13 +1,15 @@
 use std::num::NonZeroUsize;
 
+use ecow::eco_format;
 use typst_utils::NonZeroExt;
 
 use crate::diag::SourceResult;
 use crate::engine::Engine;
 use crate::foundations::{
     elem, Content, NativeElement, Packed, Resolve, Show, ShowSet, Smart, StyleChain,
-    Styles, Synthesize,
+    Styles, Synthesize, TargetElem,
 };
+use crate::html::HtmlElem;
 use crate::introspection::{
     Count, Counter, CounterUpdate, Locatable, Locator, LocatorLink,
 };
@@ -216,6 +218,20 @@ impl Synthesize for Packed<HeadingElem> {
 impl Show for Packed<HeadingElem> {
     #[typst_macros::time(name = "heading", span = self.span())]
     fn show(&self, engine: &mut Engine, styles: StyleChain) -> SourceResult<Content> {
+        let target = TargetElem::target_in(styles);
+        if target.is_html() {
+            // HTML's h1 is closer to a title element. There should only be one.
+            // Meanwhile, a level 1 Typst heading is a section heading. For this
+            // reason we map +1.
+            // TODO: Don't ignore the various non-body properties.
+            let level = self.resolve_level(styles);
+            let mapped = (level.get() + 1).clamp(1, 6);
+            let body = self.body().clone();
+            return Ok(HtmlElem::new(eco_format!("h{mapped}").as_str().into())
+                .with_body(Some(body))
+                .pack());
+        }
+
         const SPACING_TO_NUMBERING: Em = Em::new(0.3);
 
         let span = self.span();

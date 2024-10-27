@@ -3,7 +3,8 @@ use ecow::{eco_vec, EcoString, EcoVec};
 use typst::engine::{Engine, Route, Sink, Traced};
 use typst::foundations::{Context, Label, Scopes, Styles, Value};
 use typst::introspection::Introspector;
-use typst::model::{BibliographyElem, Document};
+use typst::layout::PagedDocument;
+use typst::model::BibliographyElem;
 use typst::syntax::{ast, LinkedNode, Span, SyntaxKind};
 use typst::World;
 use typst_eval::Vm;
@@ -38,7 +39,7 @@ pub fn analyze_expr(
                 }
             }
 
-            return typst::trace(world, node.span());
+            return typst::trace::<PagedDocument>(world, node.span());
         }
     };
 
@@ -85,7 +86,9 @@ pub fn analyze_import(world: &dyn World, source: &LinkedNode) -> Option<Value> {
 /// - All labels and descriptions for them, if available
 /// - A split offset: All labels before this offset belong to nodes, all after
 ///   belong to a bibliography.
-pub fn analyze_labels(document: &Document) -> (Vec<(Label, Option<EcoString>)>, usize) {
+pub fn analyze_labels(
+    document: &PagedDocument,
+) -> (Vec<(Label, Option<EcoString>)>, usize) {
     let mut output = vec![];
 
     // Labels in the document.

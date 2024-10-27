@@ -283,7 +283,9 @@ pub struct SharedArgs {
 
 /// An in-development feature that may be changed or removed at any time.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, ValueEnum)]
-pub enum Feature {}
+pub enum Feature {
+    Html,
+}
 
 /// Arguments related to where packages are stored in the system.
 #[derive(Debug, Clone, Args)]
@@ -510,6 +512,7 @@ pub enum OutputFormat {
     Pdf,
     Png,
     Svg,
+    Html,
 }
 
 impl Display for OutputFormat {

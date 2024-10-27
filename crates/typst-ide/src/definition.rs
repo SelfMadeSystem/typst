@@ -1,6 +1,6 @@
 use ecow::EcoString;
 use typst::foundations::{Label, Module, Selector, Value};
-use typst::model::Document;
+use typst::layout::PagedDocument;
 use typst::syntax::ast::AstNode;
 use typst::syntax::{ast, LinkedNode, Side, Source, Span, SyntaxKind};
 use typst::World;
@@ -14,7 +14,7 @@ use crate::{analyze_import, deref_target, named_items, DerefTarget, NamedItem};
 /// when the document is available.
 pub fn definition(
     world: &dyn World,
-    document: Option<&Document>,
+    document: Option<&PagedDocument>,
     source: &Source,
     cursor: usize,
     side: Side,

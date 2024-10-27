@@ -3,11 +3,13 @@ use std::ops::Deref;
 use ecow::{eco_format, EcoString};
 use smallvec::SmallVec;
 
-use crate::diag::{bail, At, SourceResult, StrResult};
+use crate::diag::{bail, warning, At, SourceResult, StrResult};
 use crate::engine::Engine;
 use crate::foundations::{
-    cast, elem, Content, Label, Packed, Repr, Show, Smart, StyleChain,
+    cast, elem, Content, Label, NativeElement, Packed, Repr, Show, Smart, StyleChain,
+    TargetElem,
 };
+use crate::html::HtmlElem;
 use crate::introspection::Location;
 use crate::layout::Position;
 use crate::text::{Hyphenate, TextElem};
@@ -99,18 +101,35 @@ impl LinkElem {
 
 impl Show for Packed<LinkElem> {
     #[typst_macros::time(name = "link", span = self.span())]
-    fn show(&self, engine: &mut Engine, _: StyleChain) -> SourceResult<Content> {
+    fn show(&self, engine: &mut Engine, styles: StyleChain) -> SourceResult<Content> {
         let body = self.body().clone();
-        let linked = match self.dest() {
-            LinkTarget::Dest(dest) => body.linked(dest.clone()),
-            LinkTarget::Label(label) => {
-                let elem = engine.introspector.query_label(*label).at(self.span())?;
-                let dest = Destination::Location(elem.location().unwrap());
-                body.clone().linked(dest)
-            }
-        };
+        let dest = self.dest();
 
-        Ok(linked.styled(TextElem::set_hyphenate(Hyphenate(Smart::Custom(false)))))
+        Ok(if TargetElem::target_in(styles).is_html() {
+            if let LinkTarget::Dest(Destination::Url(url)) = dest {
+                HtmlElem::new("a".into())
+                    .with_attr("href", url.clone().into_inner())
+                    .with_body(Some(body))
+                    .pack()
+            } else {
+                engine.sink.warn(warning!(
+                    self.span(),
+                    "non-URL links are not yet suppported by HTML export"
+                ));
+                body
+            }
+        } else {
+            let linked = match self.dest() {
+                LinkTarget::Dest(dest) => body.linked(dest.clone()),
+                LinkTarget::Label(label) => {
+                    let elem = engine.introspector.query_label(*label).at(self.span())?;
+                    let dest = Destination::Location(elem.location().unwrap());
+                    body.clone().linked(dest)
+                }
+            };
+
+            linked.styled(TextElem::set_hyphenate(Hyphenate(Smart::Custom(false))))
+        })
     }
 }
 

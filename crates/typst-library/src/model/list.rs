@@ -4,8 +4,9 @@ use crate::diag::{bail, SourceResult};
 use crate::engine::Engine;
 use crate::foundations::{
     cast, elem, scope, Array, Content, Context, Depth, Func, NativeElement, Packed, Show,
-    Smart, StyleChain, Styles, Value,
+    Smart, StyleChain, Styles, TargetElem, Value,
 };
+use crate::html::HtmlElem;
 use crate::layout::{BlockElem, Em, Length, VElem};
 use crate::model::ParElem;
 use crate::text::TextElem;
@@ -140,6 +141,14 @@ impl ListElem {
 
 impl Show for Packed<ListElem> {
     fn show(&self, engine: &mut Engine, styles: StyleChain) -> SourceResult<Content> {
+        if TargetElem::target_in(styles).is_html() {
+            return Ok(HtmlElem::new("ul".into())
+                .with_body(Some(Content::sequence(self.children.iter().map(|item| {
+                    HtmlElem::new("li".into()).with_body(Some(item.body.clone())).pack()
+                }))))
+                .pack());
+        }
+
         let mut realized =
             BlockElem::multi_layouter(self.clone(), engine.routines.layout_list)
                 .pack()

@@ -8,7 +8,7 @@ use typst::foundations::{
     fields_on, format_str, repr, AutoValue, CastInfo, Func, Label, NoneValue, Repr,
     Scope, StyleChain, Styles, Type, Value,
 };
-use typst::model::Document;
+use typst::layout::PagedDocument;
 use typst::syntax::{
     ast, is_id_continue, is_id_start, is_ident, LinkedNode, Side, Source, SyntaxKind,
 };
@@ -35,7 +35,7 @@ use crate::{
 /// when the document is available.
 pub fn autocomplete(
     world: &dyn World,
-    document: Option<&Document>,
+    document: Option<&PagedDocument>,
     source: &Source,
     cursor: usize,
     explicit: bool,
@@ -1005,7 +1005,7 @@ fn code_completions(ctx: &mut CompletionContext, hash: bool) {
 /// Context for autocompletion.
 struct CompletionContext<'a> {
     world: &'a (dyn World + 'a),
-    document: Option<&'a Document>,
+    document: Option<&'a PagedDocument>,
     global: &'a Scope,
     math: &'a Scope,
     text: &'a str,
@@ -1023,7 +1023,7 @@ impl<'a> CompletionContext<'a> {
     /// Create a new autocompletion context.
     fn new(
         world: &'a (dyn World + 'a),
-        document: Option<&'a Document>,
+        document: Option<&'a PagedDocument>,
         source: &'a Source,
         cursor: usize,
         explicit: bool,

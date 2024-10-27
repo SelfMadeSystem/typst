@@ -1,6 +1,9 @@
 use crate::diag::SourceResult;
 use crate::engine::Engine;
-use crate::foundations::{elem, Content, Packed, Show, StyleChain};
+use crate::foundations::{
+    elem, Content, NativeElement, Packed, Show, StyleChain, TargetElem,
+};
+use crate::html::HtmlElem;
 use crate::text::{TextElem, WeightDelta};
 
 /// Strongly emphasizes content by increasing the font weight.
@@ -40,9 +43,11 @@ pub struct StrongElem {
 impl Show for Packed<StrongElem> {
     #[typst_macros::time(name = "strong", span = self.span())]
     fn show(&self, _: &mut Engine, styles: StyleChain) -> SourceResult<Content> {
-        Ok(self
-            .body()
-            .clone()
-            .styled(TextElem::set_delta(WeightDelta(self.delta(styles)))))
+        let body = self.body.clone();
+        Ok(if TargetElem::target_in(styles).is_html() {
+            HtmlElem::new("strong".into()).with_body(Some(body)).pack()
+        } else {
+            body.styled(TextElem::set_delta(WeightDelta(self.delta(styles))))
+        })
     }
 }

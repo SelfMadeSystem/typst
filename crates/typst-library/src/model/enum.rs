@@ -1,13 +1,15 @@
 use std::str::FromStr;
 
+use ecow::eco_format;
 use smallvec::SmallVec;
 
 use crate::diag::{bail, SourceResult};
 use crate::engine::Engine;
 use crate::foundations::{
     cast, elem, scope, Array, Content, NativeElement, Packed, Show, Smart, StyleChain,
-    Styles,
+    Styles, TargetElem,
 };
+use crate::html::HtmlElem;
 use crate::layout::{Alignment, BlockElem, Em, HAlignment, Length, VAlignment, VElem};
 use crate::model::{ListItemLike, ListLike, Numbering, NumberingPattern, ParElem};
 
@@ -214,6 +216,18 @@ impl EnumElem {
 
 impl Show for Packed<EnumElem> {
     fn show(&self, engine: &mut Engine, styles: StyleChain) -> SourceResult<Content> {
+        if TargetElem::target_in(styles).is_html() {
+            return Ok(HtmlElem::new("ol".into())
+                .with_body(Some(Content::sequence(self.children.iter().map(|item| {
+                    let mut li = HtmlElem::new("li".into());
+                    if let Some(nr) = item.number(styles) {
+                        li = li.with_attr("value", eco_format!("{nr}"));
+                    }
+                    li.with_body(Some(item.body.clone())).pack()
+                }))))
+                .pack());
+        }
+
         let mut realized =
             BlockElem::multi_layouter(self.clone(), engine.routines.layout_enum)
                 .pack()
